@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Les références — L'Autre Récit</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080808;
+  --gold: #C09A3E;
+  --gold-dim: rgba(192,154,62,0.1);
+  --gold-line: rgba(192,154,62,0.22);
+  --cream: #FAF8F2;
+  --cream-70: rgba(250,248,242,0.7);
+  --cream-40: rgba(250,248,242,0.4);
+  --cream-15: rgba(250,248,242,0.12);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior:smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'DM Sans', sans-serif;
+  font-weight: 300;
+  line-height: 1.7;
+  overflow-x: hidden;
+}
+
+/* ── NAV ── */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:200;
+  padding: 18px 60px;
+  display: flex; align-items:center; justify-content:space-between;
+  background: rgba(8,8,8,0.94); backdrop-filter:blur(14px);
+  border-bottom: 1px solid var(--cream-15);
+}
+.nav-logo { font-family:'Playfair Display',serif; font-size:15px; color:var(--cream); text-decoration:none; }
+.nav-logo span { color:var(--gold); font-style:italic; }
+.nav-back { font-size:11px; color:var(--cream-40); text-decoration:none; letter-spacing:0.1em; text-transform:uppercase; transition:color 0.2s; }
+.nav-back:hover { color:var(--gold); }
+
+/* ── HERO ── */
+.hero {
+  padding: 140px 60px 80px;
+  max-width:1200px; margin:0 auto;
+  display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:end;
+}
+.hero-label {
+  font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:20px;
+  display:flex; align-items:center; gap:12px;
+  opacity:0; animation:fadeUp 0.6s 0.1s forwards;
+}
+.hero-label::before { content:''; width:28px; height:1px; background:var(--gold); }
+.hero-title {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(38px,5vw,64px); line-height:1.05; font-weight:700;
+  opacity:0; animation:fadeUp 0.6s 0.25s forwards;
+}
+.hero-title em { font-style:italic; color:var(--gold); }
+.hero-text {
+  font-size:14px; line-height:1.85; color:var(--cream-70);
+  opacity:0; animation:fadeUp 0.6s 0.4s forwards;
+}
+.hero-text p+p { margin-top:14px; }
+
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ── GOLD RULE ── */
+.gold-rule {
+  height:1px;
+  background:linear-gradient(90deg, transparent, var(--gold), transparent);
+  opacity:0.2; margin:0 60px 60px;
+}
+
+/* ── GRAPH SECTION ── */
+.graph-section { padding:0 60px 80px; max-width:1200px; margin:0 auto; }
+.graph-label {
+  font-size:11px; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--gold); opacity:0.7; margin-bottom:32px;
+  display:flex; align-items:center; gap:12px;
+}
+.graph-label::before { content:''; width:28px; height:1px; background:var(--gold); opacity:0.7; }
+.graph-container {
+  position:relative; width:100%; height:500px;
+  border:1px solid var(--gold-line);
+  background:rgba(192,154,62,0.015);
+}
+canvas#graphCanvas { display:block; width:100%; height:100%; }
+.graph-hint {
+  position:absolute; bottom:16px; right:20px;
+  font-size:10px; color:var(--cream-40); letter-spacing:0.06em;
+}
+
+/* ── MAIN LAYOUT ── */
+.main-layout {
+  display:flex; max-width:1200px; margin:0 auto; padding:0 0 120px;
+}
+
+/* ── SIDEBAR ── */
+.sidebar {
+  position:sticky; top:80px;
+  height:calc(100vh - 80px);
+  width:220px; flex-shrink:0;
+  padding:48px 0 48px 60px;
+  display:flex; flex-direction:column; gap:4px;
+  border-right:1px solid var(--cream-15);
+}
+.sidebar-label {
+  font-size:10px; letter-spacing:0.14em; text-transform:uppercase;
+  color:var(--cream-40); margin-bottom:20px;
+}
+.sidebar-item {
+  display:flex; align-items:center; gap:10px;
+  padding:10px 16px 10px 0;
+  cursor:pointer; text-decoration:none;
+  transition:all 0.2s;
+  border-right:2px solid transparent;
+}
+.sidebar-item:hover .sidebar-name { color:var(--cream); }
+.sidebar-item.active { border-right-color:var(--gold); }
+.sidebar-item.active .sidebar-name { color:var(--cream); }
+.sidebar-item.active .sidebar-dot { background:var(--gold); }
+.sidebar-item.active .sidebar-concept { color:var(--gold); opacity:1; }
+.sidebar-dot {
+  width:5px; height:5px; border-radius:50%;
+  background:var(--cream-40); flex-shrink:0; transition:background 0.2s;
+}
+.sidebar-num { font-size:9px; color:var(--gold); opacity:0.6; letter-spacing:0.1em; margin-bottom:2px; }
+.sidebar-name { font-family:'Playfair Display',serif; font-size:13px; color:var(--cream-40); transition:color 0.2s; line-height:1.2; }
+.sidebar-concept { font-size:10px; color:var(--cream-40); opacity:0.6; transition:color 0.2s, opacity 0.2s; }
+.sidebar-synthese { margin-top:auto; padding-top:24px; border-top:1px solid var(--cream-15); }
+
+/* ── CONTENT ── */
+.content-area { flex:1; padding:48px 60px 0 60px; min-width:0; }
+
+/* ── ACCORDÉON ── */
+.accordion-item {
+  border:1px solid var(--gold-line); margin-bottom:4px;
+  transition:border-color 0.3s; scroll-margin-top:100px;
+}
+.accordion-item.open { border-color:rgba(192,154,62,0.45); }
+.accordion-trigger {
+  width:100%; background:none; border:none;
+  padding:28px 32px;
+  display:flex; align-items:center; gap:20px;
+  cursor:pointer; text-align:left; transition:background 0.2s;
+}
+.accordion-trigger:hover { background:var(--gold-dim); }
+.accordion-item.open .accordion-trigger { background:rgba(192,154,62,0.06); }
+.acc-num { font-size:11px; color:var(--gold); opacity:0.6; letter-spacing:0.1em; flex-shrink:0; width:28px; }
+.acc-author { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; color:var(--cream); flex:1; }
+.acc-axis {
+  font-size:10px; letter-spacing:0.09em; text-transform:uppercase;
+  color:var(--gold); border:1px solid var(--gold-line); padding:4px 12px; flex-shrink:0;
+}
+.acc-arrow { color:var(--gold); font-size:14px; flex-shrink:0; transition:transform 0.35s ease; opacity:0.7; }
+.accordion-item.open .acc-arrow { transform:rotate(180deg); }
+.accordion-body { max-height:0; overflow:hidden; transition:max-height 0.5s cubic-bezier(0.4,0,0.2,1); }
+.accordion-item.open .accordion-body { max-height:1200px; }
+.accordion-content { padding:0 32px 40px; }
+
+.acc-citation {
+  border-left:3px solid var(--gold); background:var(--gold-dim);
+  padding:28px 36px; margin-bottom:40px;
+}
+.acc-citation-text {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(15px,1.8vw,20px); font-style:italic;
+  line-height:1.6; color:var(--cream); margin-bottom:14px;
+}
+.acc-citation-source { font-size:11px; color:var(--gold); letter-spacing:0.08em; text-transform:uppercase; opacity:0.8; }
+
+.acc-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-bottom:36px; }
+.acc-section-title { font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); opacity:0.7; margin-bottom:14px; }
+.acc-text { font-size:13px; line-height:1.85; color:var(--cream-70); }
+.acc-text p+p { margin-top:12px; }
+.acc-text strong { color:var(--cream); font-weight:500; }
+
+.acc-concepts { display:flex; flex-wrap:wrap; gap:6px; margin-top:20px; }
+.acc-concept {
+  font-size:10px; letter-spacing:0.07em; color:var(--cream-70);
+  border:1px solid var(--cream-15); padding:4px 12px;
+  transition:border-color 0.2s, color 0.2s;
+}
+.acc-concept:hover { border-color:var(--gold-line); color:var(--gold); }
+
+.acc-connections { border-top:1px solid var(--cream-15); padding-top:28px; }
+.acc-connections-title { font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:var(--gold); opacity:0.7; margin-bottom:14px; }
+.acc-connections-list { display:flex; flex-wrap:wrap; gap:8px; }
+.acc-conn-btn {
+  font-size:11px; color:var(--cream-70);
+  border:1px solid var(--gold-line); padding:6px 14px;
+  background:none; cursor:pointer;
+  display:flex; align-items:center; gap:6px;
+  transition:background 0.2s, color 0.2s;
+  font-family:'DM Sans',sans-serif;
+}
+.acc-conn-btn::before { content:'→'; color:var(--gold); font-size:11px; }
+.acc-conn-btn:hover { background:var(--gold-dim); color:var(--cream); }
+
+/* ── SYNTHÈSE ── */
+.synthese-section {
+  scroll-margin-top:100px;
+  border:1px solid var(--gold-line); padding:60px; position:relative; margin-bottom:4px;
+}
+.synthese-section::before {
+  content:''; position:absolute; top:-1px; left:40px;
+  width:60px; height:2px;
+  background:linear-gradient(90deg, var(--gold), transparent);
+}
+.synthese-title { font-family:'Playfair Display',serif; font-size:clamp(26px,3vw,40px); font-weight:700; margin-bottom:10px; }
+.synthese-title em { font-style:italic; color:var(--gold); }
+.synthese-intro {
+  font-size:14px; color:var(--cream-70); line-height:1.85;
+  max-width:600px; margin-bottom:48px; padding-bottom:40px;
+  border-bottom:1px solid var(--cream-15);
+}
+.synthese-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; margin-bottom:48px; }
+.synthese-block-title { font-family:'Playfair Display',serif; font-size:18px; font-weight:600; margin-bottom:14px; }
+.synthese-text { font-size:13px; line-height:1.85; color:var(--cream-70); }
+.synthese-text p+p { margin-top:12px; }
+.synthese-text strong { color:var(--cream); font-weight:500; }
+
+.synthese-closing { padding-top:40px; border-top:1px solid var(--cream-15); text-align:center; }
+.synthese-closing-text {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(18px,2.5vw,28px); font-style:italic;
+  color:var(--cream); margin-bottom:14px; line-height:1.5;
+}
+.synthese-closing-sub { font-size:12px; color:var(--cream-40); letter-spacing:0.06em; }
+
+/* ── VERSET ── */
+.verset {
+  padding:60px 0; text-align:center;
+  border-top:1px solid var(--cream-15); margin-top:8px;
+}
+.verset-text {
+  font-family:'Playfair Display',serif;
+  font-size:clamp(15px,2vw,22px); font-style:italic;
+  line-height:1.7; color:var(--cream-70); margin-bottom:16px;
+}
+.verset-ref { font-size:11px; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); opacity:0.7; }
+
+/* ── TOOLTIP GRAPHE ── */
+.graph-tooltip {
+  position:fixed; pointer-events:none; z-index:300;
+  background:rgba(8,8,8,0.97); border:1px solid rgba(192,154,62,0.5);
+  padding:20px 24px; max-width:280px;
+  opacity:0; transform:translateY(6px);
+  transition:opacity 0.2s, transform 0.2s;
+}
+.graph-tooltip.visible { opacity:1; transform:translateY(0); }
+.tt-num { font-size:9px; letter-spacing:0.14em; color:var(--gold); opacity:0.7; margin-bottom:6px; text-transform:uppercase; }
+.tt-name { font-family:'Playfair Display',serif; font-size:18px; font-weight:700; margin-bottom:4px; }
+.tt-dates { font-size:11px; color:var(--cream-40); margin-bottom:14px; }
+.tt-quote {
+  font-family:'Playfair Display',serif; font-size:12px; font-style:italic;
+  color:var(--cream-70); line-height:1.6;
+  padding-left:12px; border-left:2px solid rgba(192,154,62,0.4); margin-bottom:14px;
+}
+.tt-axes { display:flex; gap:6px; flex-wrap:wrap; }
+.tt-axis-tag {
+  font-size:9px; letter-spacing:0.08em; text-transform:uppercase;
+  color:var(--gold); border:1px solid var(--gold-line); padding:3px 8px;
+}
+
+/* ── RESPONSIVE ── */
+@media(max-width:900px) {
+  nav, .hero, .graph-section { padding-left:32px; padding-right:32px; }
+  .hero { grid-template-columns:1fr; gap:32px; padding-top:120px; }
+  .gold-rule { margin:0 32px 40px; }
+  .main-layout { flex-direction:column; }
+  .sidebar {
+    position:static; height:auto; width:100%;
+    padding:24px 32px; border-right:none; border-bottom:1px solid var(--cream-15);
+    flex-direction:row; flex-wrap:wrap; gap:8px;
+  }
+  .sidebar-label, .sidebar-synthese { display:none; }
+  .sidebar-item { border-right:none; border-bottom:2px solid transparent; padding:6px 12px; }
+  .sidebar-item.active { border-bottom-color:var(--gold); }
+  .sidebar-concept { display:none; }
+  .content-area { padding:32px; }
+  .acc-grid { grid-template-columns:1fr; gap:32px; }
+  .synthese-section { padding:40px 32px; }
+  .synthese-grid { grid-template-columns:1fr; gap:32px; }
+  .graph-container { height:340px; }
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">l'autre <span>récit</span></a>
+  <a href="/" class="nav-back">← Accueil</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div>
+    <div class="hero-label">Nos références</div>
+    <h1 class="hero-title">Des outils,<br>pas des <em>ornements.</em></h1>
+  </div>
+  <div class="hero-text">
+    <p>Chaque auteur mobilisé ici a été choisi pour ce qu'il apporte — pas pour ce qu'il signale. Ces penseurs ne décorent pas une ligne éditoriale : ils la fondent, la structurent, la challengent.</p>
+    <p>Cette page est une porte d'entrée, pas un inventaire. Il y a des dizaines d'autres voix qui traversent cette plateforme — dans les analyses, les formations, les articles. Ces six-là sont l'endroit où commencer à comprendre comment on pense ici.</p>
+  </div>
+</section>
+
+<div class="gold-rule"></div>
+
+<!-- GRAPHE X/Y -->
+<section class="graph-section">
+  <div class="graph-label">Carte des connexions — survolez un auteur</div>
+  <div class="graph-container">
+    <canvas id="graphCanvas"></canvas>
+    <div class="graph-hint">Survolez · Cliquez pour ouvrir la fiche</div>
+  </div>
+</section>
+
+<!-- Tooltip graphe -->
+<div class="graph-tooltip" id="graphTooltip">
+  <div class="tt-num" id="tt-num"></div>
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-dates" id="tt-dates"></div>
+  <div class="tt-quote" id="tt-quote"></div>
+  <div class="tt-axes" id="tt-axes"></div>
+</div>
+
+<div class="gold-rule"></div>
+
+<!-- MAIN LAYOUT -->
+<div class="main-layout">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-label">Navigation</div>
+    <a href="#fiche-bennabi" class="sidebar-item active" data-target="fiche-bennabi">
+      <div class="sidebar-dot"></div>
+      <div>
+        <div class="sidebar-num">/01</div>
+        <div class="sidebar-name">Bennabi</div>
+        <div class="sidebar-concept">Colonisabilité</div>
+      </div>
+    </a>
+    <a href="#fiche-ibnbadis" class="sidebar-item" data-target="fiche-ibnbadis">
+      <div class="sidebar-dot"></div>
+      <div>
+        <div class="sidebar-num">/02</div>
+        <div class="sidebar-name">Ibn Badis</div>
+        <div class="sidebar-concept">Transmission</div>
+      </div>
+    </a>
+    <a href="#fiche-fanon" class="sidebar-item" data-target="fiche-fanon">
+      <div class="sidebar-dot"></div>
+      <div>
+        <div class="sidebar-num">/03</div>
+        <div class="sidebar-name">Fanon</div>
+        <div class="sidebar-concept">Assignation raciale</div>
+      </div>
+    </a>
+    <a href="#fiche-malcolm" class="sidebar-item" data-target="fiche-malcolm">
+      <div class="sidebar-dot"></div>
+      <div>
+        <div class="sidebar-num">/04</div>
+        <div class="sidebar-name">Malcolm X</div>
+        <div class="sidebar-concept">Médias</div>
+      </div>
+    </a>
+    <a href="#fiche-gramsci" class="sidebar-item" data-target="fiche-gramsci">
+      <div class="sidebar-dot"></div>
+      <div>
+        <div class="sidebar-num">/05</div>
+        <div class="sidebar-name">Gramsci</div>
+        <div class="sidebar-concept">Hégémonie</div>
+      </div>
+    </a>
+    <a href="#fiche-sankara" class="sidebar-item" data-target="fiche-sankara">
+      <div class="sidebar-dot"></div>
+      <div>
+        <div class="sidebar-num">/06</div>
+        <div class="sidebar-name">Sankara</div>
+        <div class="sidebar-concept">Émancipation</div>
+      </div>
+    </a>
+    <div class="sidebar-synthese">
+      <a href="#synthese" class="sidebar-item" data-target="synthese">
+        <div class="sidebar-dot"></div>
+        <div>
+          <div class="sidebar-name" style="font-size:11px;font-family:'DM Sans',sans-serif;letter-spacing:0.06em;text-transform:uppercase;">Synthèse</div>
+        </div>
+      </a>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <div class="content-area">
+
+    <!-- FICHE 01 — BENNABI -->
+    <div class="accordion-item open" id="fiche-bennabi">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span class="acc-num">/01</span>
+        <span class="acc-author">Malek Bennabi</span>
+        <span class="acc-axis">Colonisabilité</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="acc-citation">
+            <div class="acc-citation-text">"On ne cesse d'être colonisé qu'en cessant d'être colonisable — c'est une loi immuable."</div>
+            <div class="acc-citation-source">Les Conditions de la Renaissance · 1949</div>
+          </div>
+          <div class="acc-grid">
+            <div>
+              <div class="acc-section-title">Pourquoi cette citation</div>
+              <div class="acc-text">
+                <p>Bennabi ne parle pas du colonisateur. Il parle du colonisé. La question n'est pas "qui nous domine ?" mais "qu'avons-nous en nous qui rend la domination possible ?"</p>
+                <p>Le concept de <strong>colonisabilité</strong> désigne l'état de faiblesse structurelle d'une société qui, ayant perdu sa dynamique civilisationnelle, devient réceptive à la domination. Libérer un territoire ne suffit pas — si les structures mentales ne sont pas transformées, la domination se perpétue.</p>
+              </div>
+            </div>
+            <div>
+              <div class="acc-section-title">Ce qu'il apporte à L'Autre Récit</div>
+              <div class="acc-text">
+                <p>Bennabi lie l'analyse de la domination à l'exigence de réforme intérieure. Il refuse les deux facilités : l'auto-victimisation et la naïveté. Cette double exigence est l'ADN de la plateforme.</p>
+                <p>Il est le pivot intellectuel du corpus — entre Fanon (psychologie) et Gramsci (structures), entre Ibn Badis (transmission) et Sankara (action).</p>
+              </div>
+              <div class="acc-concepts">
+                <span class="acc-concept">Colonisabilité</span>
+                <span class="acc-concept">Monde des idées</span>
+                <span class="acc-concept">Renaissance islamique</span>
+                <span class="acc-concept">Réforme intérieure</span>
+              </div>
+            </div>
+          </div>
+          <div class="acc-connections">
+            <div class="acc-connections-title">Résonne avec</div>
+            <div class="acc-connections-list">
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-fanon')">Fanon — psychologie du colonisé</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-gramsci')">Gramsci — hégémonie culturelle</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-sankara')">Sankara — décolonisation des mentalités</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHE 02 — IBN BADIS -->
+    <div class="accordion-item" id="fiche-ibnbadis">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span class="acc-num">/02</span>
+        <span class="acc-author">Ibn Badis</span>
+        <span class="acc-axis">Transmission</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="acc-citation">
+            <div class="acc-citation-text">"Si tu enseignes à un garçon, tu as enseigné à un individu. Si tu enseignes à une fille, tu as enseigné à une nation tout entière."</div>
+            <div class="acc-citation-source">Discours sur l'éducation · Algérie, années 1930</div>
+          </div>
+          <div class="acc-grid">
+            <div>
+              <div class="acc-section-title">Pourquoi cette citation</div>
+              <div class="acc-text">
+                <p>Elle déconstruit silencieusement un récit dominant : l'islam présenté comme structurellement misogyne. Ibn Badis fait de l'éducation des filles une priorité en 1930 — sous occupation française.</p>
+                <p>La phrase dit que <strong>l'éducation d'une femme a une portée civilisationnelle que celle d'un homme n'a pas</strong>. C'est une pensée du temps long contre la réactivité militante.</p>
+              </div>
+            </div>
+            <div>
+              <div class="acc-section-title">Ce qu'il apporte à L'Autre Récit</div>
+              <div class="acc-text">
+                <p>Sa présence signale que <strong>la pensée islamique a produit ses propres réponses à la domination</strong> sans attendre les théoriciens occidentaux. Avec Sankara, il forme le pôle "femmes" du corpus — deux hommes, deux traditions, même exigence.</p>
+              </div>
+              <div class="acc-concepts">
+                <span class="acc-concept">Éducation comme résistance</span>
+                <span class="acc-concept">Temps long</span>
+                <span class="acc-concept">Islam réformiste</span>
+                <span class="acc-concept">Transmission générationnelle</span>
+              </div>
+            </div>
+          </div>
+          <div class="acc-connections">
+            <div class="acc-connections-title">Résonne avec</div>
+            <div class="acc-connections-list">
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-sankara')">Sankara — libération de la femme</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-bennabi')">Bennabi — renaissance islamique</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHE 03 — FANON -->
+    <div class="accordion-item" id="fiche-fanon">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span class="acc-num">/03</span>
+        <span class="acc-author">Frantz Fanon</span>
+        <span class="acc-axis">Assignation raciale</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="acc-citation">
+            <div class="acc-citation-text">"D'un homme, on exigeait une conduite d'homme. De moi, une conduite d'homme noir."</div>
+            <div class="acc-citation-source">Peau noire, masques blancs · 1952</div>
+          </div>
+          <div class="acc-grid">
+            <div>
+              <div class="acc-section-title">Pourquoi cette citation</div>
+              <div class="acc-text">
+                <p>En une phrase, Fanon décrit la violence ontologique de la racialisation : l'impossibilité d'accéder à l'universel. L'homme blanc est l'homme. Le Noir est un <em>type</em> d'homme — défini avant tout par sa couleur.</p>
+                <p>Aujourd'hui, "terroriste", "communautariste", "radical" fonctionnent selon le même mécanisme. C'est du Fanon appliqué en direct.</p>
+              </div>
+            </div>
+            <div>
+              <div class="acc-section-title">Ce qu'il apporte à L'Autre Récit</div>
+              <div class="acc-text">
+                <p>Fanon est le penseur de l'<strong>intériorisation</strong> — comment le colonisé adopte le regard du colonisateur sur lui-même. La citation vient de son œuvre la moins citée — ce choix est délibéré : L'Autre Récit mobilise Fanon comme outil analytique, pas comme icône.</p>
+              </div>
+              <div class="acc-concepts">
+                <span class="acc-concept">Racialisation</span>
+                <span class="acc-concept">Névrose coloniale</span>
+                <span class="acc-concept">Intériorisation</span>
+                <span class="acc-concept">Mission générationnelle</span>
+              </div>
+            </div>
+          </div>
+          <div class="acc-connections">
+            <div class="acc-connections-title">Résonne avec</div>
+            <div class="acc-connections-list">
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-bennabi')">Bennabi — colonisabilité intérieure</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-malcolm')">Malcolm X — étiquetage médiatique</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-gramsci')">Gramsci — consentement fabriqué</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHE 04 — MALCOLM X -->
+    <div class="accordion-item" id="fiche-malcolm">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span class="acc-num">/04</span>
+        <span class="acc-author">Malcolm X</span>
+        <span class="acc-axis">Médias & manipulation</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="acc-citation">
+            <div class="acc-citation-text">"Si vous n'y prenez pas garde, les médias vont vous faire haïr les opprimés et aimer ceux qui les oppriment."</div>
+            <div class="acc-citation-source">Audubon Ballroom, Harlem · 13 décembre 1964</div>
+          </div>
+          <div class="acc-grid">
+            <div>
+              <div class="acc-section-title">Pourquoi cette citation</div>
+              <div class="acc-text">
+                <p>1964. Malcolm X décrit en une phrase ce que Lippmann théorisait en 1922 et ce que votre fil d'actualité reproduit chaque jour. La phrase décrit le mécanisme, la direction, et avertit sans moraliser — elle laisse l'agentivité au lecteur.</p>
+              </div>
+            </div>
+            <div>
+              <div class="acc-section-title">Ce qu'il apporte à L'Autre Récit</div>
+              <div class="acc-text">
+                <p>Malcolm X parle <em>depuis</em> l'expérience des médias comme cible. Sa trajectoire — du séparatisme au panhumanisme — est une démonstration vivante de ce que Fanon appelle "découvrir sa mission" : une pensée en mouvement, qui grandit.</p>
+              </div>
+              <div class="acc-concepts">
+                <span class="acc-concept">Fabrique du consentement</span>
+                <span class="acc-concept">Diabolisation médiatique</span>
+                <span class="acc-concept">Autodétermination</span>
+                <span class="acc-concept">Islam et politique</span>
+              </div>
+            </div>
+          </div>
+          <div class="acc-connections">
+            <div class="acc-connections-title">Résonne avec</div>
+            <div class="acc-connections-list">
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-gramsci')">Gramsci — hégémonie culturelle</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-fanon')">Fanon — assignation raciale</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-bennabi')">Bennabi — colonisabilité mentale</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHE 05 — GRAMSCI -->
+    <div class="accordion-item" id="fiche-gramsci">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span class="acc-num">/05</span>
+        <span class="acc-author">Antonio Gramsci</span>
+        <span class="acc-axis">Hégémonie culturelle</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="acc-citation">
+            <div class="acc-citation-text">"L'indifférence est le poids mort de l'histoire."</div>
+            <div class="acc-citation-source">Je hais les indifférents · La Città futura · 11 février 1917</div>
+          </div>
+          <div class="acc-grid">
+            <div>
+              <div class="acc-section-title">Pourquoi cette citation</div>
+              <div class="acc-text">
+                <p>Gramsci a 25 ans quand il écrit ce texte. Sa phrase est une analyse politique : <strong>l'indifférence n'est pas neutre, elle est active</strong>. Elle laisse le champ libre à ceux qui agissent, elle légitime par son silence ce qu'elle prétend ne pas choisir.</p>
+              </div>
+            </div>
+            <div>
+              <div class="acc-section-title">Ce qu'il apporte à L'Autre Récit</div>
+              <div class="acc-text">
+                <p>Gramsci est le penseur de l'<strong>hégémonie culturelle</strong> — la domination qui passe par le consentement, pas la force. Déconstruire les récits dominants, c'est faire de la contre-hégémonie. Il théorise depuis sa cellule ce que L'Autre Récit pratique.</p>
+              </div>
+              <div class="acc-concepts">
+                <span class="acc-concept">Hégémonie culturelle</span>
+                <span class="acc-concept">Consentement fabriqué</span>
+                <span class="acc-concept">Intellectuels organiques</span>
+                <span class="acc-concept">Sens commun</span>
+              </div>
+            </div>
+          </div>
+          <div class="acc-connections">
+            <div class="acc-connections-title">Résonne avec</div>
+            <div class="acc-connections-list">
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-malcolm')">Malcolm X — fabrication médiatique</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-bennabi')">Bennabi — colonisabilité comme consentement</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-fanon')">Fanon — intériorisation de la domination</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHE 06 — SANKARA -->
+    <div class="accordion-item" id="fiche-sankara">
+      <button class="accordion-trigger" onclick="toggleAccordion(this)">
+        <span class="acc-num">/06</span>
+        <span class="acc-author">Thomas Sankara</span>
+        <span class="acc-axis">Émancipation</span>
+        <span class="acc-arrow">▼</span>
+      </button>
+      <div class="accordion-body">
+        <div class="accordion-content">
+          <div class="acc-citation">
+            <div class="acc-citation-text">"Il n'y a de révolution sociale véritable que lorsque la femme est libérée. Que jamais mes yeux ne voient une société où la moitié du peuple est maintenue dans le silence."</div>
+            <div class="acc-citation-source">L'émancipation des femmes et la lutte de libération de l'Afrique · Pathfinder Press, 2001</div>
+          </div>
+          <div class="acc-grid">
+            <div>
+              <div class="acc-section-title">Pourquoi cette citation</div>
+              <div class="acc-text">
+                <p>Sankara dit ce que peu d'hommes politiques africains de son époque osaient dire. Ce qui rend la citation exceptionnelle : elle vient d'un chef d'État militaire qui le dit sans y être sommé. <strong>L'oppresseur trouve toujours quelqu'un à opprimer à son tour.</strong></p>
+              </div>
+            </div>
+            <div>
+              <div class="acc-section-title">Ce qu'il apporte à L'Autre Récit</div>
+              <div class="acc-text">
+                <p>Sankara dit que L'Autre Récit traite de la domination sous toutes ses formes — y compris celle que les dominés exercent sur d'autres dominés. Il complète Ibn Badis : deux hommes, deux traditions, même exigence.</p>
+              </div>
+              <div class="acc-concepts">
+                <span class="acc-concept">Émancipation des femmes</span>
+                <span class="acc-concept">Décolonisation des mentalités</span>
+                <span class="acc-concept">Anti-impérialisme</span>
+                <span class="acc-concept">Panafricanisme</span>
+              </div>
+            </div>
+          </div>
+          <div class="acc-connections">
+            <div class="acc-connections-title">Résonne avec</div>
+            <div class="acc-connections-list">
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-ibnbadis')">Ibn Badis — éducation des femmes</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-bennabi')">Bennabi — décolonisation des mentalités</button>
+              <button class="acc-conn-btn" onclick="openAndScroll('fiche-fanon')">Fanon — mission générationnelle</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SYNTHÈSE -->
+    <div class="synthese-section" id="synthese">
+      <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);opacity:0.7;margin-bottom:8px;">Synthèse</div>
+      <h2 class="synthese-title">Une <em>grille,</em> pas une bibliothèque.</h2>
+      <p class="synthese-intro">Ces six penseurs ne sont pas une liste de références accumulées pour faire sérieux. Ils forment une structure — chacun occupe une fonction précise dans la façon dont L'Autre Récit analyse le monde.</p>
+
+      <div class="synthese-grid">
+        <div>
+          <div class="synthese-block-title">Le mécanisme de la domination</div>
+          <div class="synthese-text">
+            <p><strong>Gramsci</strong> pose la question fondamentale : comment la domination se maintient-elle sans recours permanent à la force ? Par l'hégémonie culturelle — la fabrication d'un "sens commun".</p>
+            <p><strong>Malcolm X</strong> en donne l'application médiatique. <strong>Fanon</strong> en donne la version psychologique : le colonisé finit par voir le monde avec les yeux du colonisateur.</p>
+          </div>
+        </div>
+        <div>
+          <div class="synthese-block-title">La réponse : réforme et transmission</div>
+          <div class="synthese-text">
+            <p><strong>Bennabi</strong> : si la domination vient aussi de l'intérieur, la libération commence par la transformation du "monde des idées".</p>
+            <p><strong>Ibn Badis</strong> opérationnalise par l'éducation et le temps long. <strong>Sankara</strong> réunit les deux axes : révolution sociale et décolonisation des mentalités sont indissociables.</p>
+          </div>
+        </div>
+        <div>
+          <div class="synthese-block-title">Ce que ce corpus dit de L'Autre Récit</div>
+          <div class="synthese-text">
+            <p>La coprésence de Gramsci et de Bennabi n'est pas un paradoxe — c'est la signature de la plateforme. L'Autre Récit ne s'inscrit dans aucune tradition exclusive. Il mobilise les outils là où ils se trouvent.</p>
+          </div>
+        </div>
+        <div>
+          <div class="synthese-block-title">Ces biographies ne sont pas des ornements</div>
+          <div class="synthese-text">
+            <p>Bennabi en exil, Fanon mort à 36 ans, Malcolm assassiné à 39 ans, Gramsci en prison, Sankara abattu à 37 ans. Ibn Badis mort de surmenage à 51 ans après avoir ouvert 200 écoles clandestines.</p>
+            <p>Ces penseurs viennent du monde qu'ils analysent. Ils ont payé le prix de leurs idées.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="synthese-closing">
+        <div class="synthese-closing-text">"Ces six penseurs ne sont pas L'Autre Récit.<br>Ils sont l'endroit d'où il part."</div>
+        <div class="synthese-closing-sub">Il y a des dizaines d'autres voix dans les analyses, les formations, les articles.</div>
+      </div>
+    </div>
+
+    <!-- VERSET -->
+    <div class="verset">
+      <p class="verset-text">"Allah ne modifie pas l'état d'un peuple tant que les individus qui le composent ne modifient pas ce qui est en eux-mêmes."</p>
+      <span class="verset-ref">Ar-Ra'd, 13:11</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════
+// GRAPHE X/Y
+// ═══════════════════════════════
+const canvas = document.getElementById('graphCanvas');
+const ctx = canvas.getContext('2d');
+
+const AUTHORS = [
+  { id:'fanon',       num:'/03', name:'Frantz Fanon',     dates:'1925–1961 · Martinique/Algérie', quote:'"D\'un homme, on exigeait une conduite d\'homme. De moi, une conduite d\'homme noir."', x:1.5, y:3,   axis:['Assignation raciale','Psychologie coloniale'], primary:true  },
+  { id:'bennabi',     num:'/01', name:'Malek Bennabi',     dates:'1905–1973 · Algérie',            quote:'"On ne cesse d\'être colonisé qu\'en cessant d\'être colonisable."',                    x:3,   y:5,   axis:['Colonisabilité','Réforme intérieure'],         primary:true  },
+  { id:'gramsci',     num:'/05', name:'Antonio Gramsci',   dates:'1891–1937 · Italie',             quote:'"L\'indifférence est le poids mort de l\'histoire."',                                   x:9,   y:1.5, axis:['Hégémonie culturelle','Consentement'],         primary:true  },
+  { id:'malcolm',     num:'/04', name:'Malcolm X',         dates:'1925–1965 · États-Unis',         quote:'"Les médias vont vous faire haïr les opprimés et aimer ceux qui les oppriment."',       x:7.5, y:6,   axis:['Médias & manipulation','Autodétermination'],  primary:true  },
+  { id:'ibnbadis',    num:'/02', name:'Ibn Badis',         dates:'1889–1940 · Algérie',            quote:'"Si tu enseignes à une fille, tu as enseigné à une nation."',                           x:5,   y:7.5, axis:['Transmission','Islam réformiste'],            primary:true  },
+  { id:'sankara',     num:'/06', name:'Thomas Sankara',    dates:'1949–1987 · Burkina Faso',       quote:'"Il n\'y a de révolution sociale véritable que lorsque la femme est libérée."',         x:6,   y:9,   axis:['Émancipation','Action concrète'],             primary:true  },
+  { id:'said',        num:'—',   name:'Edward Said',       dates:'1935–2003 · Palestine/USA',      quote:'"L\'Orient n\'existe pas : il est une construction du regard occidental."',             x:7,   y:2,   axis:['Orientalisme','Regard occidental'],           primary:false },
+  { id:'becker',      num:'—',   name:'Howard Becker',     dates:'1928–2023 · États-Unis',         quote:'"Est déviant celui dont on a intérêt à dire qu\'il transgresse la norme."',             x:4,   y:2,   axis:['Étiquetage social','Déviance construite'],    primary:false },
+  { id:'ibnkhaldoun', num:'—',   name:'Ibn Khaldoun',      dates:'XIVe siècle · Maghreb',          quote:'"Les vaincus cherchent toujours à imiter leurs vainqueurs."',                          x:5.5, y:1,   axis:['Cycles civilisationnels','Précurseur'],       primary:false },
+];
+
+const EDGES = [
+  { a:'fanon',    b:'bennabi',     label:'Intériorisation'      },
+  { a:'fanon',    b:'gramsci',     label:'Consentement'         },
+  { a:'fanon',    b:'malcolm',     label:'Assignation'          },
+  { a:'bennabi',  b:'ibnbadis',    label:'Islam réformiste'     },
+  { a:'bennabi',  b:'sankara',     label:'Décolonisation'       },
+  { a:'bennabi',  b:'gramsci',     label:'Hégémonie'            },
+  { a:'gramsci',  b:'malcolm',     label:'Médias'               },
+  { a:'gramsci',  b:'said',        label:'Orientalisme'         },
+  { a:'gramsci',  b:'becker',      label:'Étiquetage'           },
+  { a:'malcolm',  b:'said',        label:'Regard médiatique'    },
+  { a:'ibnbadis', b:'sankara',     label:'Femmes'               },
+  { a:'becker',   b:'said',        label:'Construction sociale' },
+  { a:'ibnkhaldoun', b:'bennabi',  label:'Précurseur'           },
+];
+
+let W, H, hoveredNode = null;
+const PAD = { top:50, right:50, bottom:50, left:50 };
+
+function resize() {
+  const rect = canvas.parentElement.getBoundingClientRect();
+  W = canvas.width  = rect.width;
+  H = canvas.height = rect.height;
+}
+
+function toX(x) { return PAD.left + (x/10) * (W - PAD.left - PAD.right); }
+function toY(y) { return PAD.top + (H - PAD.top - PAD.bottom) - (y/10) * (H - PAD.top - PAD.bottom); }
+
+function drawGraph(hovered) {
+  ctx.clearRect(0, 0, W, H);
+
+  const GOLD = '#C09A3E';
+  const CREAM = '#FAF8F2';
+  const CREAM70 = 'rgba(250,248,242,0.7)';
+  const CREAM40 = 'rgba(250,248,242,0.4)';
+
+  // Grille de fond
+  for(let i=1; i<10; i++) {
+    ctx.globalAlpha = 0.08;
+    ctx.strokeStyle = CREAM;
+    ctx.lineWidth = 0.5;
+    ctx.beginPath(); ctx.moveTo(toX(i), PAD.top); ctx.lineTo(toX(i), H-PAD.bottom); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(PAD.left, toY(i)); ctx.lineTo(W-PAD.right, toY(i)); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+
+  // Axes principaux
+  ctx.strokeStyle = 'rgba(192,154,62,0.35)'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(PAD.left, toY(5)); ctx.lineTo(W-PAD.right, toY(5)); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(toX(5), PAD.top); ctx.lineTo(toX(5), H-PAD.bottom); ctx.stroke();
+
+  // Bordure
+  ctx.strokeStyle = 'rgba(192,154,62,0.2)'; ctx.lineWidth = 1;
+  ctx.strokeRect(PAD.left, PAD.top, W-PAD.left-PAD.right, H-PAD.top-PAD.bottom);
+
+  // Labels quadrants
+  ctx.font = '300 9px "DM Sans", sans-serif';
+  ctx.fillStyle = 'rgba(192,154,62,0.2)';
+  ctx.textAlign = 'left';  ctx.fillText('INDIVIDU · DIAGNOSTIC', PAD.left+8, PAD.top+16);
+  ctx.textAlign = 'right'; ctx.fillText('SOCIÉTÉ · DIAGNOSTIC',  W-PAD.right-8, PAD.top+16);
+  ctx.textAlign = 'left';  ctx.fillText('INDIVIDU · ACTION',     PAD.left+8, H-PAD.bottom-8);
+  ctx.textAlign = 'right'; ctx.fillText('SOCIÉTÉ · ACTION',      W-PAD.right-8, H-PAD.bottom-8);
+
+  // Axes labels
+  ctx.fillStyle = 'rgba(192,154,62,0.5)'; ctx.font = '300 10px "DM Sans", sans-serif';
+  ctx.textAlign = 'left';  ctx.fillText('← Individu / Psychologie', PAD.left, toY(5)-8);
+  ctx.textAlign = 'right'; ctx.fillText('Société / Structures →',   W-PAD.right, toY(5)-8);
+
+  // Edges
+  EDGES.forEach(e => {
+    const a = AUTHORS.find(n=>n.id===e.a), b = AUTHORS.find(n=>n.id===e.b);
+    if(!a||!b) return;
+    const ax=toX(a.x), ay=toY(a.y), bx=toX(b.x), by=toY(b.y);
+    const isActive = hovered && (hovered.id===a.id||hovered.id===b.id);
+    ctx.beginPath(); ctx.moveTo(ax,ay); ctx.lineTo(bx,by);
+    ctx.strokeStyle = isActive ? 'rgba(192,154,62,0.65)' : 'rgba(192,154,62,0.1)';
+    ctx.lineWidth = isActive ? 1.5 : 0.8;
+    ctx.stroke();
+    if(isActive) {
+      const mx=(ax+bx)/2, my=(ay+by)/2, angle=Math.atan2(by-ay,bx-ax);
+      ctx.save(); ctx.translate(mx,my); ctx.rotate(angle);
+      ctx.fillStyle='rgba(192,154,62,0.8)'; ctx.font='300 9px "DM Sans",sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='bottom';
+      ctx.fillText(e.label,0,-5); ctx.restore();
+    }
+  });
+
+  // Nodes
+  AUTHORS.forEach(node => {
+    const nx=toX(node.x), ny=toY(node.y);
+    const isPrimary=node.primary, isHov=hovered&&hovered.id===node.id;
+    const R = isPrimary ? 20 : 14;
+    const rr = R + (isHov ? 5 : 0);
+
+    if(isHov) {
+      const grd = ctx.createRadialGradient(nx,ny,0,nx,ny,rr+18);
+      grd.addColorStop(0,'rgba(192,154,62,0.15)'); grd.addColorStop(1,'rgba(192,154,62,0)');
+      ctx.beginPath(); ctx.arc(nx,ny,rr+18,0,Math.PI*2); ctx.fillStyle=grd; ctx.fill();
+    }
+
+    ctx.beginPath(); ctx.arc(nx,ny,rr+5,0,Math.PI*2);
+    ctx.strokeStyle = isHov ? GOLD : (isPrimary?'rgba(192,154,62,0.3)':'rgba(250,248,242,0.12)');
+    ctx.lineWidth = isHov ? 1.5 : 0.8; ctx.stroke();
+
+    ctx.beginPath(); ctx.arc(nx,ny,rr,0,Math.PI*2);
+    ctx.fillStyle = isHov ? 'rgba(192,154,62,0.18)' : (isPrimary?'rgba(192,154,62,0.07)':'rgba(250,248,242,0.03)');
+    ctx.fill();
+    ctx.strokeStyle = isHov ? GOLD : (isPrimary?'rgba(192,154,62,0.4)':'rgba(250,248,242,0.18)');
+    ctx.lineWidth = isPrimary ? 1 : 0.6; ctx.stroke();
+
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    const parts = node.name.split(' ');
+    const first = parts[0], rest = parts.slice(1).join(' ');
+
+    if(isPrimary) {
+      ctx.fillStyle = isHov ? CREAM : CREAM70;
+      ctx.font = `600 ${isHov?11:10}px 'Playfair Display',serif`;
+      ctx.fillText(first, nx, ny - (rest?4:0));
+      if(rest) {
+        ctx.font = `400 ${isHov?10:9}px 'Playfair Display',serif`;
+        ctx.fillStyle = isHov ? GOLD : 'rgba(192,154,62,0.7)';
+        ctx.fillText(rest, nx, ny+6);
+      }
+    } else {
+      ctx.fillStyle = isHov ? CREAM70 : 'rgba(250,248,242,0.35)';
+      ctx.font = `300 ${isHov?10:9}px 'DM Sans',sans-serif`;
+      ctx.fillText(first, nx, ny-(rest?3:0));
+      if(rest) {
+        ctx.font = '300 8px "DM Sans",sans-serif';
+        ctx.fillStyle = isHov ? 'rgba(192,154,62,0.7)' : 'rgba(250,248,242,0.2)';
+        ctx.fillText(rest, nx, ny+6);
+      }
+    }
+  });
+}
+
+function getNode(mx, my) {
+  return AUTHORS.find(n => {
+    const nx=toX(n.x), ny=toY(n.y), R=n.primary?26:20;
+    return Math.hypot(mx-nx,my-ny)<R;
+  })||null;
+}
+
+const tooltip = document.getElementById('graphTooltip');
+
+canvas.addEventListener('mousemove', e => {
+  const rect=canvas.getBoundingClientRect();
+  const scaleX=canvas.width/rect.width, scaleY=canvas.height/rect.height;
+  const mx=(e.clientX-rect.left)*scaleX, my=(e.clientY-rect.top)*scaleY;
+  const node=getNode(mx,my);
+  if(node!==hoveredNode) { hoveredNode=node; canvas.style.cursor=node?'pointer':'default'; drawGraph(node); }
+  if(node) {
+    document.getElementById('tt-num').textContent=node.num;
+    document.getElementById('tt-name').textContent=node.name;
+    document.getElementById('tt-dates').textContent=node.dates;
+    document.getElementById('tt-quote').textContent=node.quote;
+    document.getElementById('tt-axes').innerHTML=node.axis.map(a=>`<span class="tt-axis-tag">${a}</span>`).join('');
+    let tx=e.clientX+16, ty=e.clientY-10;
+    if(tx+280>window.innerWidth-20) tx=e.clientX-296;
+    if(ty+220>window.innerHeight) ty=e.clientY-220;
+    tooltip.style.left=tx+'px'; tooltip.style.top=ty+'px';
+    tooltip.classList.add('visible');
+  } else { tooltip.classList.remove('visible'); }
+});
+canvas.addEventListener('mouseleave',()=>{ hoveredNode=null; tooltip.classList.remove('visible'); drawGraph(null); });
+canvas.addEventListener('click', e => {
+  const rect=canvas.getBoundingClientRect();
+  const mx=(e.clientX-rect.left)*(canvas.width/rect.width);
+  const my=(e.clientY-rect.top)*(canvas.height/rect.height);
+  const node=getNode(mx,my);
+  if(node&&node.primary) openAndScroll('fiche-'+node.id);
+});
+
+window.addEventListener('resize',()=>{ resize(); drawGraph(hoveredNode); });
+resize(); drawGraph(null);
+
+// ═══════════════════════════════
+// ACCORDÉON
+// ═══════════════════════════════
+function toggleAccordion(trigger) {
+  const item=trigger.closest('.accordion-item');
+  item.classList.toggle('open');
+}
+function openAndScroll(targetId) {
+  const el=document.getElementById(targetId);
+  if(!el) return;
+  if(el.classList.contains('accordion-item')) el.classList.add('open');
+  setTimeout(()=>el.scrollIntoView({behavior:'smooth',block:'start'}),50);
+}
+
+// ═══════════════════════════════
+// SIDEBAR ACTIVE
+// ═══════════════════════════════
+const SECTIONS=['fiche-bennabi','fiche-ibnbadis','fiche-fanon','fiche-malcolm','fiche-gramsci','fiche-sankara','synthese'];
+const sidebarItems=document.querySelectorAll('.sidebar-item[data-target]');
+
+function updateSidebar() {
+  let current=null;
+  SECTIONS.forEach(id=>{ const el=document.getElementById(id); if(el&&el.getBoundingClientRect().top<=140) current=id; });
+  sidebarItems.forEach(item=>item.classList.toggle('active',item.getAttribute('data-target')===current));
+}
+window.addEventListener('scroll',updateSidebar,{passive:true});
+updateSidebar();
+sidebarItems.forEach(item=>{
+  item.addEventListener('click',e=>{ e.preventDefault(); openAndScroll(item.getAttribute('data-target')); });
+});
+</script>
+</body>
+</html>
